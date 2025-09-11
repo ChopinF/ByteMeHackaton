@@ -1,15 +1,17 @@
 import os
 import re
-from fastapi import FastAPI, Request, Form, APIRouter
+from fastapi import FastAPI, Request, Form, Query, APIRouter
 from fastapi.responses import PlainTextResponse
 import httpx
 from dotenv import load_dotenv
 from twilio.twiml.voice_response import VoiceResponse,  Gather
 from twilio.rest import Client
+from urllib.parse import quote
+from .state import call_messages
 
 
 router = APIRouter()
-BASE_URL = 'https://802126f966c4.ngrok-free.app'
+BASE_URL = 'https://7e7d77ce2da0.ngrok-free.app'
 
 
 """
@@ -87,7 +89,11 @@ returns:
 
 
 @router.post("/handle-intent-specific", response_class=PlainTextResponse)
-async def handle_intent_specific(SpeechResult:str = Form(None)) -> PlainTextResponse:
+async def handle_intent_specific(
+    SpeechResult:str = Form(None),
+    CallSid: str = Form(None),
+    ) -> PlainTextResponse:
+
     global message_case
     message : str = ''
     resp = VoiceResponse()
@@ -115,10 +121,18 @@ async def handle_intent_specific(SpeechResult:str = Form(None)) -> PlainTextResp
             body_preview = (res.text[:500] if "res" in locals() and hasattr(res, "text") else str(e))
             print("Backend error or non-JSON response:", body_preview)
         
-    reply = data.get('text', "Sorry, I didn't get a reply dick.")
+    reply = data.get('text', "Sorry, I didn't get a reply.")
 
-    if re.search("sms", reply):
-        resp.redirect('/message')
+    if re.search("sms", reply, flags=re.IGNORECASE):
+        if CallSid:
+            # save raw reply
+            call_messages[CallSid] = reply
+            # includes CallSid in query, so /message can retrive the text
+            resp.redirect(f'/message?callSid={quote(CallSid)}', method='POST')
+            return PlainTextResponse(str(resp), media_type='text/xml')
+        else:
+            resp.redirect("/message", method="POST")
+            return PlainTextResponse(str(resp), media_type="text/xml")
 
     if message_case == 0:
         message = 'For ByteMe insurance informations, you may state your question now'

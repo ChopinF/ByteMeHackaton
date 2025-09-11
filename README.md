@@ -32,3 +32,13 @@ clientul bussiness -> transcript
 [ ] Pe partea de backend (optional):
 
 1. Cum putem salva .mp3 / fisierul audio pe backend sa fie accesibil
+
+
+
+
+** Backend **
+
+Impartire a functionalitatii in functie de tasta apasata:
+    1 -> Intrebari generale
+    2 -> Intrebari specifice pe documentele incarcate de firma
+    3 -> Human Escalation

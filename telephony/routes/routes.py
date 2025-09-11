@@ -9,6 +9,7 @@ from twilio.rest import Client
 from .options import router as option_router
 from .utils import router as utils_router
 from . import options
+from . import state
 
 
 """
@@ -27,11 +28,9 @@ async def root_fallback():
                              media_type="text/xml")
 
 
-firstQuestion : bool = True
 
 @router.post("/voice", response_class=PlainTextResponse)
 async def voice(Digits:int = Form(None)) -> PlainTextResponse:
-    global firstQuestion
     options.message_case = 0
     resp = VoiceResponse()
     
@@ -45,14 +44,14 @@ async def voice(Digits:int = Form(None)) -> PlainTextResponse:
     
     gather = Gather(input="dtmf", partialResultCallback="/partial", timeout="5", speechTimeout="auto")
 
-    if firstQuestion:
+    if state.firstQuestion:
         gather.say('Hi! Tell me what you need. For general purpose information, press one. For more specific informations, press 2. For speaking with an agent press 3.')
-        firstQuestion = False
+        state.firstQuestion = False
     else:
         gather.say('Can I help you with something else? Press one for general purpose and two for more specific.')
     
     resp.append(gather)
-    resp.say("Sorry, I didn't catch that vagina.")
+    resp.say("Sorry, I didn't catch that.")
 
     return PlainTextResponse(str(resp), media_type="text/xml")
 
